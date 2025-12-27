@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatat Keuangan - Excel Style</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .balance-card {
+            background: #667eea;
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .balance-card span {
+            display: block;
+            font-size: 18px;
+            margin-top: 5px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        input, select, button {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        th {
+            background: #f4f4f4;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        tr:hover {
+            background: #e0e0e0;
+        }
+        .income { color: green; font-weight: bold; }
+        .expense { color: red; font-weight: bold; }
+        .cumulative-balance {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pencatat Keuangan - Excel Style</h1>
+        <div class="balance-card">
+            Saldo Total
+            <span>Rp <span id="totalBalance">0</span></span>
+        </div>
+        <form id="transactionForm">
+            <select id="type" required>
+                <option value="">Pilih Jenis</option>
+                <option value="income">Pemasukan</option>
+                <option value="expense">Pengeluaran</option>
+            </select>
+            <input type="text" id="description" placeholder="Deskripsi (mis: Gaji, Makanan)" required>
+            <input type="number" id="amount" placeholder="Jumlah (Rp)" required>
+            <button type="submit">Tambah Transaksi</button>
+        </form>
+        <table id="transactionTable">
+            <thead>
+                <tr>
+                    <th>Jenis</th>
+                    <th>Deskripsi</th>
+                    <th>Jumlah</th>
+                    <th>Tanggal</th>
+                    <th>Saldo Kumulatif</th>
+                </tr>
+            </thead>
+            <tbody id="transactionList"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const form = document.getElementById('transactionForm');
+        const table = document.getElementById('transactionList');
+        const balanceDisplay = document.getElementById('totalBalance');
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        let totalBalance = 0;
+
+        function updateBalance() {
+            totalBalance = transactions.reduce((sum, t) => {
+                return t.type === 'income' ? sum + t.amount : sum - t.amount;
+            }, 0);
+            balanceDisplay.textContent = totalBalance.toLocaleString('id-ID');
+        }
+
+        function renderTransactions() {
+            table.innerHTML = '';
+            let cumulative = 0;
+            transactions.forEach((t, index) => {
+                cumulative += t.type === 'income' ? t.amount : -t.amount;
+                const row = table.insertRow();
+                row.innerHTML = `
+                    <td class="${t.type}">${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}</td>
+                    <td>${t.description}</td>
+                    <td>Rp ${t.amount.toLocaleString('id-ID')}</td>
+                    <td>${t.date}</td>
+                    <td class="cumulative-balance">Rp ${cumulative.toLocaleString('id-ID')}</td>
+                `;
+            });
+            updateBalance();
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const type = document.getElementById('type').value;
+            const description = document.getElementById('description').value;
+            const amount = parseInt(document.getElementById('amount').value);
+            const date = new Date().toLocaleDateString('id-ID');
+
+            transactions.push({ type, description, amount, date });
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            renderTransactions();
+            form.reset();
+        });
+
+        renderTransactions();
+    </script>
+</body>
+        </html>
